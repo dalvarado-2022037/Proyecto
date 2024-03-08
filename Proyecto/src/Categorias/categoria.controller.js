@@ -1,7 +1,27 @@
 import Categoria from './categoria.model.js'
+import Product from '../Productos/productos.model.js'
 
 export const testCategoria = (req, res)=>{
     return res.send('Conectado a Categoria')
+}
+
+export const categoriaDefault = async(req, res)=>{
+    try{
+        let exist = await Categoria.findOne({name:'DEFAULT'})
+        if(!exist){
+            let data = {
+                name: 'DEFAULT',
+                description: 'Product without category without register'
+            }
+            let categoria = new Categoria(data)
+            await categoria.save()
+            console.log('Category default created')
+        }
+        console.log('Category default exist');
+    }catch(err){
+        console.error(err)
+        return res.status(500).send({message: 'Error category could not be added',err})
+    }
 }
 
 export const addCategoria = async(req,res)=>{
@@ -9,28 +29,10 @@ export const addCategoria = async(req,res)=>{
         let data = req.body
         let categoria = new Categoria(data)
         await categoria.save()
-        return res.send({message: 'Added invoice'})
+        return res.send({message: 'Added category'})
     }catch(err){
         console.error(err)
         return res.status(500).send({message: 'Error category could not be added',err})
-    }
-}
-
-export const viewCategoria = async(req, res)=>{
-    try{
-        let { name } = req.body
-        let categoria = await Categoria.findOne({name})
-        if (categoria){
-            let loggedCategoria = {
-                name: categoria.name,
-                description: categoria.description
-            }
-            return res.send({message: `The ${categoria.name} found`, loggedCategoria})
-        }
-        return res.status(404).send({message: 'Invalid Name'})
-    }catch(error){
-        console.error(err)
-        return res.status(404).send({message: 'Error when searching'})
     }
 }
 
@@ -61,13 +63,20 @@ export const updateCategoria = async(req,res)=>{
     }
 }
 
-export const daleteCategoria = async(req, res)=>{
+export const deleteCategoria = async(req, res)=>{
     try{
         let { id } = req.params
-        let deleteCatego = await Categoria.findOneAndDelete({_id:id})
-        if(!deleteCatego) return res.status(404).send({message: 'The category could not be deleted'})
+
+        let idDefault = await Categoria.findOne({name:'DEFAULT'})
+        await Product.updateMany({category: id}, {category: idDefault._id})
+
+        let deleteCatego = await Categoria.deleteOne({_id:id})
+        if(!deleteCatego)
+            return res.status(404).send({message: 'The category could not be deleted'})
+
         return res.send({message: `The category: ${deleteCatego.name} has been successfully removed`})
-    }catch(error){
-        
+    }catch(err){
+        console.error(err)
+        return res.status(404).send({message: 'Unexpected error while daleteCategoria'})
     }
 }

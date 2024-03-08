@@ -1,7 +1,6 @@
-import mongoose, { Schema, model} from 'mongoose'
-import { categoriDefault } from './productos.controller.js'
+import mongoose from 'mongoose'
 
-const productSchema = Schema({
+const productSchema = mongoose.Schema({
     name: {
         type: String,
         required: true
@@ -33,4 +32,4 @@ const productSchema = Schema({
     }
 })
 
-export default model('products', productSchema)
+export default mongoose.model('products', productSchema)

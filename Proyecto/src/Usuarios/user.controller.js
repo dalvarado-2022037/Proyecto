@@ -10,20 +10,21 @@ export const testUser = (req, res)=>{
 
 export const adminDefault = async(req, res)=>{
     try{
-        let userExist = User.findOne({username: 'dalvarado'})
+        let userExist = await User.findOne({username: 'dalvarado'})
         if(!userExist){
             let data = {
                 name: 'Douglas',
                 surname: 'Alvarado',
                 username: 'dalvarado',
                 gmail: 'dalvarado@kinal.edu.gt',
-                password: '12345678',
+                password: await encrypt('12345678'),
                 role: 'ADMIN'
             }
-            data.password = await encrypt(data.password)
             let user = new User(data)
             await user.save()
+            console.log('User created')
         }
+        console.log('User default exist')
     }catch(err){
         console.error(err)
         return res.status(500).send({message: 'Error adding administrator'})
@@ -47,8 +48,16 @@ export const register = async(req, res)=>{
 
 export const login = async(req, res)=>{
     try{
-        let { username, password } = req.body
-        let user = await User.findOne({username})
+        let { username, password, gmail } = req.body
+        let user = await User.findOne({
+            $or: [
+                {
+                    username: username
+                },{
+                    gmail: gmail
+                }
+            ]
+        })
         if(user && await checkPassword(password, user.password)){
             let loggedUser = {
                 uid: user.id,
@@ -94,18 +103,45 @@ export const updateUser = async(req, res)=>{
 export const deleteUser = async(req, res)=>{
     try{
         let { id } = req.params
-        let { uid, role } = req.user
-        console.log(id)
-        console.log(uid)
-        console.log(role)
+        let { uid, role, password } = req.user
+        let data = req.body
         if (role == 'CLIENT') 
-            if(id != uid) 
-                return res.status(403).send({message: 'You cannot alter this users information'})
+            if(id != uid)
+                if(checkPassword(data.password, password))
+                    return res.status(403).send({message: 'You cannot alter this users information'})
         let userDelete = await User.findOneAndDelete({_id: id})
         if(!userDelete) return res.status(404).send({message: 'Account not foud and not deleted'})
         return res.send({message: `Account with username ${userDelete.username} deleted successfully`})
     }catch(err){
         console.error(err)
         return res.status(500).send({message: 'Error deleting account'})
+    }
+}
+
+export const changeRol = async(req, res)=>{
+    try{
+        let { uid } = req.user
+        let { id } = req.params
+        let { role } = req.body
+        let userAdmin = await User.findOne({_id:uid})
+        let userChange = await User.findOne({_id:id})
+        if(userAdmin.role == 'CLIENT')
+            return res.status(403).send({message: 'You cannot alter this users information.'})
+
+        if(!userChange) 
+            return res.status(404).send({message: 'User not found'})
+
+        let updateUser = await User.findOneAndUpdate(
+            {_id: id},
+            {role: role},
+            {new: true}
+        )
+        if(!updateUser) 
+            return res.status(401).send({message: 'User not found and not updated'})
+        
+        return res.send({message: 'Updated user rol', updateUser})
+    }catch(err){
+        console.error(err)
+        return res.status(500).send({message: 'Error to the connected to "changeRol"'}) 
     }
 }

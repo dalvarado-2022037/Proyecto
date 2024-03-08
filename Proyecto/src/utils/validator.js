@@ -32,3 +32,22 @@ export const checkUpdate = (data, userId)=>{
         return false
     }
 }
+
+export const isAdmin = async(req, res, next)=>{
+    try{
+        let { role, username } = req.user
+        if(!role || role != 'ADMIN') return res.status(403).send({message: `You dont have acces | username ${username}`})
+        next()
+    }catch(err){
+        return false
+    }
+}
+
+/**
+    try{
+        
+    }catch(err){
+        console.error(err)
+        return res.status(500).send({message: 'Error to the connected to "name"'}) 
+    }
+ */

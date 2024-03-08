@@ -1,30 +1,22 @@
 import { Schema, model} from "mongoose";
 
-const facturaSchema = Schema({
+const carritoSchema = Schema({
     cliente: {
         type: Schema.ObjectId,
         ref: 'user',
         required: true        
     },
     data: [{
-        product: {
+        products: {
             type: Schema.ObjectId,
             ref: 'product',
             required: true
         },
-        cantidad: {
+        cantida: {
             type: Number,
             required: true
         }
-    }],
-    subTotal: {
-        type: Number,
-        required: true
-    },
-    total: {
-        type: Number,
-        required: true
-    }
+    }]
 })
 
-export default model('factura', facturaSchema)
+export default model('shopintCart', carritoSchema)
